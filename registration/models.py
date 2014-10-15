@@ -26,6 +26,45 @@ except ImportError:
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
 
+class EmailSpecificRegistrationManager(RegistrationManager):
+    """
+    Inherits from RegistrationManager. 
+    
+    Overrides the create_inactive_user function.
+    New create_inactive_user will check if the provided 
+    email is the list of valid email domains (settings.VALID_EMAIL_DOMAINS) 
+    Will call super create_inactive_user if valid, will send 
+    an apology email if not.
+    
+    Note: This could also be handled in an extension of 
+    the RegistrationForm class, but since we are sending an
+    email to all users who attempt to register, this is handled
+    by a Manager
+
+    """
+    def create_inactive_user(self, username, email, password,
+                             site, send_email=True, request=None):
+        try:
+            valid_domains = settings.VALID_EMAIL_DOMAINS            
+        except AttributeError as e:
+            print('Must include a set of valid email domains in settings', e.value)
+            
+        user_domain = email.split('@')[1].lower()
+        if user_domain in valid_domains:
+            return RegistrationManager.create_inactive_user(self, 
+                                                            username, 
+                                                            email, 
+                                                            password,
+                                                            site, 
+                                                            send_email, 
+                                                            request)
+        
+        if send_email:
+            registration_profile.send_apology_email_email(site, request)
+    
+        
+
+    
 class RegistrationManager(models.Manager):
     """
     Custom manager for the ``RegistrationProfile`` model.
@@ -222,8 +261,38 @@ class RegistrationProfile(models.Model):
         return (self.activation_key == self.ACTIVATED or
                 (self.user.date_joined + expiration_date <= datetime_now()))
     activation_key_expired.boolean = True
-
+    
+    
+    def send_apology_email(self, site, request=None):
+        subject_template_file = 'registration/apology_email_subject.txt'
+        text_template_file = 'registration/apology_email.txt'
+        body_template_file = 'registration/apology_email.html'
+        update_dict = {
+            'user': self.user,
+            'site': site,
+        }        
+        send_template_email(site, subject_template_file, 
+                            text_template_file, body_template_file, 
+                            update_dict, request)        
+        
     def send_activation_email(self, site, request=None):
+        subject_template_file = 'registration/activation_email_subject.txt'
+        text_template_file = 'registration/activation_email.txt'
+        body_template_file = 'registration/activation_email.html'
+        update_dict = {
+            'user': self.user,
+            'activation_key': self.activation_key,
+            'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
+            'site': site,
+        }
+        send_template_email(site, subject_template_file, 
+                            text_template_file, body_template_file, update_dict,
+                            request)
+        
+
+    def send_template_email(self, site, subject_template_file, 
+                            text_template_file, body_template_file, 
+                            update_dict, request=None):
         """
         Send an activation email to the user associated with this
         ``RegistrationProfile``.
@@ -278,22 +347,17 @@ class RegistrationProfile(models.Model):
         # because template context processors
         # can overwrite some of the values like user
         # if django.contrib.auth.context_processors.auth is used
-        ctx_dict.update({
-            'user': self.user,
-            'activation_key': self.activation_key,
-            'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-            'site': site,
-        })
+        ctx_dict.update(update_dict)
         subject = getattr(settings, 'REGISTRATION_EMAIL_SUBJECT_PREFIX', '') + \
-                  render_to_string('registration/activation_email_subject.txt', ctx_dict)
+                  render_to_string(subject_template_file, ctx_dict)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
 
-        message_txt = render_to_string('registration/activation_email.txt', ctx_dict)
+        message_txt = render_to_string(text_template_file, ctx_dict)
         email_message = EmailMultiAlternatives(subject, message_txt, settings.DEFAULT_FROM_EMAIL, [self.user.email])
 
         try:
-            message_html = render_to_string('registration/activation_email.html', ctx_dict)
+            message_html = render_to_string(body_template_file, ctx_dict)
         except TemplateDoesNotExist:
             message_html = None
 
