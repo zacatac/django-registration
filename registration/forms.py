@@ -120,3 +120,22 @@ class RegistrationFormNoFreeEmail(RegistrationForm):
         if email_domain in self.bad_domains:
             raise forms.ValidationError(_("Registration using free email addresses is prohibited. Please supply a different email address."))
         return self.cleaned_data['email']
+
+class RegistrationFormOnlyValidDomains(RegistrationForm):
+    """
+    Subclass of ``RegistrationForm`` which only allows registration with   
+    email addresses from  valid domains
+
+    To change the list of accepted domains. Change the settings.VALID_EMAIL_DOMAINS
+    """
+    
+    def clean_email(self):
+        try:
+            valid_domains = settings.VALID_EMAIL_DOMAINS            
+        except AttributeError:
+            print('Must include a set of valid email domains in settings')
+
+        user_domain = self.cleaned_data['email'].split('@')[1].lower()    
+        if user_domain in valid_domains:
+            return self.cleaned_data['email']
+        raise forms.ValidationError(_("You must use a %s email address" % valid_domains[0]))

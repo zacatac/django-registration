@@ -16,7 +16,6 @@ from django.utils import six
 
 from registration.users import UserModel, UserModelString
 
-
 try:
     from django.utils.timezone import now as datetime_now
 except ImportError:
