@@ -26,44 +26,6 @@ except ImportError:
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
 
-class EmailSpecificRegistrationManager(RegistrationManager):
-    """
-    Inherits from RegistrationManager. 
-    
-    Overrides the create_inactive_user function.
-    New create_inactive_user will check if the provided 
-    email is the list of valid email domains (settings.VALID_EMAIL_DOMAINS) 
-    Will call super create_inactive_user if valid, will send 
-    an apology email if not.
-    
-    Note: This could also be handled in an extension of 
-    the RegistrationForm class, but since we are sending an
-    email to all users who attempt to register, this is handled
-    by a Manager
-
-    """
-    def create_inactive_user(self, username, email, password,
-                             site, send_email=True, request=None):
-        try:
-            valid_domains = settings.VALID_EMAIL_DOMAINS            
-        except AttributeError as e:
-            print('Must include a set of valid email domains in settings', e.value)
-            
-        user_domain = email.split('@')[1].lower()
-        if user_domain in valid_domains:
-            return RegistrationManager.create_inactive_user(self, 
-                                                            username, 
-                                                            email, 
-                                                            password,
-                                                            site, 
-                                                            send_email, 
-                                                            request)
-        
-        if send_email:
-            registration_profile.send_apology_email_email(site, request)
-    
-        
-
     
 class RegistrationManager(models.Manager):
     """
@@ -202,6 +164,44 @@ class RegistrationManager(models.Manager):
                         profile.delete()
             except UserModel().DoesNotExist:
                 profile.delete()
+
+
+
+class EmailSpecificRegistrationManager(RegistrationManager):
+    """
+    Inherits from RegistrationManager. 
+    
+    Overrides the create_inactive_user function.
+    New create_inactive_user will check if the provided 
+    email is the list of valid email domains (settings.VALID_EMAIL_DOMAINS) 
+    Will call super create_inactive_user if valid, will send 
+    an apology email if not.
+    
+    Note: This could also be handled in an extension of 
+    the RegistrationForm class, but since we are sending an
+    email to all users who attempt to register, this is handled
+    by a Manager
+
+    """
+    def create_inactive_user(self, username, email, password,
+                             site, send_email=True, request=None):
+        try:
+            valid_domains = settings.VALID_EMAIL_DOMAINS            
+        except AttributeError as e:
+            print('Must include a set of valid email domains in settings', e.value)
+            
+        user_domain = email.split('@')[1].lower()
+        if user_domain in valid_domains:
+            return RegistrationManager.create_inactive_user(self, 
+                                                            username, 
+                                                            email, 
+                                                            password,
+                                                            site, 
+                                                            send_email, 
+                                                            request)
+        
+        if send_email:
+            registration_profile.send_apology_email_email(site, request)
 
 
 @python_2_unicode_compatible
@@ -365,3 +365,11 @@ class RegistrationProfile(models.Model):
             email_message.attach_alternative(message_html, 'text/html')
 
         email_message.send()
+
+@python_2_unicode_compatible
+class EmailSpecificRegistrationProfile(RegistrationProfile):
+    """
+    Inherits from RegistrationProfile. Only change
+    is the objects var now points to EmailSpecificRegistrationManager
+    """
+    objects = EmailSpecificRegistrationManager()
