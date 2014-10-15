@@ -372,4 +372,8 @@ class EmailSpecificRegistrationProfile(RegistrationProfile):
     Inherits from RegistrationProfile. Only change
     is the objects var now points to EmailSpecificRegistrationManager
     """
+
+    def __str__(self):
+        return RegistrationProfile.__str__(self)
+
     objects = EmailSpecificRegistrationManager()
