@@ -349,7 +349,7 @@ class RegistrationProfile(models.Model):
             'user': self.user,
             'site': site,
         }        
-        send_template_email(site, subject_template_file, 
+        self.send_template_email(site, subject_template_file, 
                             text_template_file, body_template_file, 
                             update_dict, request)        
         
@@ -363,7 +363,7 @@ class RegistrationProfile(models.Model):
             'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
             'site': site,
         }
-        send_template_email(site, subject_template_file, 
+        self.send_template_email(site, subject_template_file, 
                             text_template_file, body_template_file, update_dict,
                             request)
 
