@@ -187,8 +187,8 @@ class EmailSpecificRegistrationManager(RegistrationManager):
                              site, send_email=True, request=None):
         try:
             valid_domains = settings.VALID_EMAIL_DOMAINS            
-        except AttributeError as e:
-            print('Must include a set of valid email domains in settings', e.value)
+        except AttributeError:
+            print('Must include a set of valid email domains in settings')
             
         user_domain = email.split('@')[1].lower()
         if user_domain in valid_domains:
