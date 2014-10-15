@@ -200,8 +200,14 @@ class EmailSpecificRegistrationManager(RegistrationManager):
                                                             send_email, 
                                                             request)
         
+        #REMOVE: Possibly unsafe to create new user even if it is not saved
+        new_user = UserModel().objects.create_user(username, email, password)
+        new_user.is_active = False
+        
+        registration_profile = self.create_profile(new_user)
+
         if send_email:
-            RegistrationProfile().send_apology_email(site, request)
+            registration_profile.send_apology_email(site, request)
 
 
 @python_2_unicode_compatible
