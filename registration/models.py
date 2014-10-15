@@ -201,7 +201,7 @@ class EmailSpecificRegistrationManager(RegistrationManager):
                                                             request)
         
         if send_email:
-            RegistrationProfile().send_apology_email_email(site, request)
+            RegistrationProfile().send_apology_email(site, request)
 
 
 @python_2_unicode_compatible
