@@ -263,31 +263,6 @@ class RegistrationProfile(models.Model):
     activation_key_expired.boolean = True
     
     
-    def send_apology_email(self, site, request=None):
-        subject_template_file = 'registration/apology_email_subject.txt'
-        text_template_file = 'registration/apology_email.txt'
-        body_template_file = 'registration/apology_email.html'
-        update_dict = {
-            'user': self.user,
-            'site': site,
-        }        
-        send_template_email(site, subject_template_file, 
-                            text_template_file, body_template_file, 
-                            update_dict, request)        
-        
-    def send_activation_email(self, site, request=None):
-        subject_template_file = 'registration/activation_email_subject.txt'
-        text_template_file = 'registration/activation_email.txt'
-        body_template_file = 'registration/activation_email.html'
-        update_dict = {
-            'user': self.user,
-            'activation_key': self.activation_key,
-            'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
-            'site': site,
-        }
-        send_template_email(site, subject_template_file, 
-                            text_template_file, body_template_file, update_dict,
-                            request)
         
 
     def send_template_email(self, site, subject_template_file, 
@@ -365,6 +340,33 @@ class RegistrationProfile(models.Model):
             email_message.attach_alternative(message_html, 'text/html')
 
         email_message.send()
+
+    def send_apology_email(self, site, request=None):
+        subject_template_file = 'registration/apology_email_subject.txt'
+        text_template_file = 'registration/apology_email.txt'
+        body_template_file = 'registration/apology_email.html'
+        update_dict = {
+            'user': self.user,
+            'site': site,
+        }        
+        send_template_email(site, subject_template_file, 
+                            text_template_file, body_template_file, 
+                            update_dict, request)        
+        
+    def send_activation_email(self, site, request=None):
+        subject_template_file = 'registration/activation_email_subject.txt'
+        text_template_file = 'registration/activation_email.txt'
+        body_template_file = 'registration/activation_email.html'
+        update_dict = {
+            'user': self.user,
+            'activation_key': self.activation_key,
+            'expiration_days': settings.ACCOUNT_ACTIVATION_DAYS,
+            'site': site,
+        }
+        send_template_email(site, subject_template_file, 
+                            text_template_file, body_template_file, update_dict,
+                            request)
+
 
 @python_2_unicode_compatible
 class EmailSpecificRegistrationProfile(RegistrationProfile):
